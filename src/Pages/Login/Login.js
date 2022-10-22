@@ -1,13 +1,18 @@
 import React, { useContext, useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../constexts/AuthProvider/AuthProvider';
+import toast from 'react-hot-toast'
 
 const Login = () => {
-   const { userLogin } = useContext(AuthContext);
+   const [error, setError] = useState('');
+   const { userLogin,setLoading } = useContext(AuthContext);
    const [checkbox, setCheckbox] = useState(true)
    const navigate = useNavigate();
+   const location = useLocation();
+
+   const from = location.state?.from?.pathname || '/';
    const handleSubmit = (event) => {
       event.preventDefault()
       const form = event.target;
@@ -18,9 +23,21 @@ const Login = () => {
          .then(result => {
             const user = result.user;
             console.log(user);
-            navigate('/');
+            form.reset();
+            setError('')
+            if (user.emailVerified) {
+               navigate(from, {replace: true})
+            }
+            else {
+               toast.error('Your email not a verified')
+            }
          })
-      .catch(e=>console.error(e))
+         .catch(e => {
+            setError(e.message)
+         })
+         .finnaly(() => {
+         setLoading(false)
+      })
    }
 
    const handleChekMark = () => {
@@ -44,6 +61,10 @@ const Login = () => {
          <Button variant="primary" type="submit" disabled={checkbox}>
             Submit
          </Button>
+         <br />
+         <Form.Text className='text-danger'>
+            {error}
+         </Form.Text>
       </Form>
    );
 };
